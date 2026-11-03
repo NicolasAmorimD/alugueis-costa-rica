@@ -53,17 +53,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Arquivo inválido. Envie JPG, PNG ou WebP de até 10 MB.' }, { status: 400 })
   }
 
-  const { AWS_REGION, AWS_S3_BUCKET_NAME, NEXT_PUBLIC_APP_URL } = process.env
-  if (!AWS_REGION || !AWS_S3_BUCKET_NAME || !NEXT_PUBLIC_APP_URL) {
+  const APP_AWS_REGION = process.env.APP_AWS_REGION ?? process.env.AWS_REGION
+  const APP_AWS_ACCESS_KEY_ID = process.env.APP_AWS_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID
+  const APP_AWS_SECRET_ACCESS_KEY = process.env.APP_AWS_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY
+  const APP_AWS_S3_BUCKET_NAME = process.env.APP_AWS_S3_BUCKET_NAME ?? process.env.AWS_S3_BUCKET_NAME
+  if (!APP_AWS_REGION || !APP_AWS_ACCESS_KEY_ID || !APP_AWS_SECRET_ACCESS_KEY || !APP_AWS_S3_BUCKET_NAME) {
     return NextResponse.json({ error: 'O envio de imagens não está configurado neste servidor.' }, { status: 503 })
   }
 
-  const client = new S3Client({ region: AWS_REGION })
+  const client = new S3Client({
+    region: APP_AWS_REGION,
+    credentials: {
+      accessKeyId: APP_AWS_ACCESS_KEY_ID,
+      secretAccessKey: APP_AWS_SECRET_ACCESS_KEY,
+    },
+  })
   const extension = validation.data.contentType.split('/')[1].replace('jpeg', 'jpg')
   const key = `properties/${randomUUID()}.${extension}`
   try {
     const command = new PutObjectCommand({
-      Bucket: AWS_S3_BUCKET_NAME,
+      Bucket: APP_AWS_S3_BUCKET_NAME,
       Key: key,
       ContentType: validation.data.contentType,
       ContentLength: validation.data.size,
@@ -71,10 +80,10 @@ export async function POST(request: NextRequest) {
     const uploadUrl = await getSignedUrl(client, command, { expiresIn: 300 })
     const deleteUrl = await getSignedUrl(
       client,
-      new DeleteObjectCommand({ Bucket: AWS_S3_BUCKET_NAME, Key: key }),
+      new DeleteObjectCommand({ Bucket: APP_AWS_S3_BUCKET_NAME, Key: key }),
       { expiresIn: 300 },
     )
-    const imageUrl = `${NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/api/images?key=${encodeURIComponent(key)}`
+    const imageUrl = `${request.nextUrl.origin}/api/images?key=${encodeURIComponent(key)}`
     return NextResponse.json({ uploadUrl, deleteUrl, imageUrl, key })
   } catch (error) {
     console.error('Erro ao preparar upload da imagem:', error)
