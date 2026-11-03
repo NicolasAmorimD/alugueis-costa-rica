@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       new DeleteObjectCommand({ Bucket: APP_AWS_S3_BUCKET_NAME, Key: key }),
       { expiresIn: 300 },
     )
-    const imageUrl = `${request.nextUrl.origin}/api/images?key=${encodeURIComponent(key)}`
+    const imageUrl = `/api/images?key=${encodeURIComponent(key)}`
     return NextResponse.json({ uploadUrl, deleteUrl, imageUrl, key })
   } catch (error) {
     console.error('Erro ao preparar upload da imagem:', error)
