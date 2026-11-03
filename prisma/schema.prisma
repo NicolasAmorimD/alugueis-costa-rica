@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Property {
+  id             String         @id @default(uuid())
+  title          String         @db.VarChar(120)
+  description    String         @db.Text
+  price          Decimal        @db.Decimal(10, 2)
+  propertyType   PropertyType
+  neighborhood   String         @db.VarChar(80)
+  bedrooms       Int            @default(0)
+  bathrooms      Int            @default(0)
+  parkingSpots   Int            @default(0)
+  petsAllowed    Boolean        @default(false)
+  whatsappNumber String         @db.VarChar(20)
+  managementTokenHash String?   @db.VarChar(64)
+  status         PropertyStatus @default(AVAILABLE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  images         PropertyImage[]
+
+  @@index([neighborhood])
+  @@index([propertyType])
+  @@index([status])
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  url        String   @db.Text
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+enum PropertyType {
+  HOUSE
+  APARTMENT
+  KITNET
+  COMMERCIAL
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  RENTED
+  INACTIVE
+}
