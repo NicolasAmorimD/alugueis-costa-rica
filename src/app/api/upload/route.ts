@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { DeleteObjectCommand, S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { createS3Client, getS3Config } from '@/lib/server/s3'
 
 const uploadSchema = z.object({
   fileName: z.string().min(1).max(200),
@@ -53,26 +54,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Arquivo inválido. Envie JPG, PNG ou WebP de até 10 MB.' }, { status: 400 })
   }
 
-  const APP_AWS_REGION = process.env.APP_AWS_REGION ?? process.env.AWS_REGION
-  const APP_AWS_ACCESS_KEY_ID = process.env.APP_AWS_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID
-  const APP_AWS_SECRET_ACCESS_KEY = process.env.APP_AWS_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY
-  const APP_AWS_S3_BUCKET_NAME = process.env.APP_AWS_S3_BUCKET_NAME ?? process.env.AWS_S3_BUCKET_NAME
-  if (!APP_AWS_REGION || !APP_AWS_ACCESS_KEY_ID || !APP_AWS_SECRET_ACCESS_KEY || !APP_AWS_S3_BUCKET_NAME) {
+  const s3Config = getS3Config()
+  if (!s3Config) {
     return NextResponse.json({ error: 'O envio de imagens não está configurado neste servidor.' }, { status: 503 })
   }
 
-  const client = new S3Client({
-    region: APP_AWS_REGION,
-    credentials: {
-      accessKeyId: APP_AWS_ACCESS_KEY_ID,
-      secretAccessKey: APP_AWS_SECRET_ACCESS_KEY,
-    },
-  })
+  const client = createS3Client(s3Config.region)
   const extension = validation.data.contentType.split('/')[1].replace('jpeg', 'jpg')
   const key = `properties/${randomUUID()}.${extension}`
   try {
     const command = new PutObjectCommand({
-      Bucket: APP_AWS_S3_BUCKET_NAME,
+      Bucket: s3Config.bucket,
       Key: key,
       ContentType: validation.data.contentType,
       ContentLength: validation.data.size,
@@ -80,7 +72,7 @@ export async function POST(request: NextRequest) {
     const uploadUrl = await getSignedUrl(client, command, { expiresIn: 300 })
     const deleteUrl = await getSignedUrl(
       client,
-      new DeleteObjectCommand({ Bucket: APP_AWS_S3_BUCKET_NAME, Key: key }),
+      new DeleteObjectCommand({ Bucket: s3Config.bucket, Key: key }),
       { expiresIn: 300 },
     )
     const imageUrl = `/api/images?key=${encodeURIComponent(key)}`

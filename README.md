@@ -20,7 +20,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 
 ## Upload de fotos (AWS S3)
 
-Configure `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET_NAME` e `AWS_S3_PUBLIC_URL`. A identidade AWS deve ter permissão de escrita apenas no bucket/prefixo usado para imagens. Configure a política CORS do bucket para permitir `PUT` da origem da aplicação e os tipos `image/jpeg`, `image/png` e `image/webp`.
+Configure `APP_AWS_REGION` e `APP_AWS_S3_BUCKET_NAME`. O servidor usa a cadeia padrão de credenciais do AWS SDK: no Amplify, associe uma IAM Role ao ambiente SSR com permissão de `s3:PutObject`, `s3:DeleteObject` e `s3:GetObject` somente no prefixo `properties/*` desse bucket. Não configure `AWS_ACCESS_KEY_ID` ou `AWS_SECRET_ACCESS_KEY` no Amplify nem no processo de build. Localmente, use um perfil AWS (`AWS_PROFILE`) ou outra fonte suportada pela cadeia padrão de credenciais. Configure também a política CORS do bucket para permitir `PUT` da origem da aplicação e os tipos `image/jpeg`, `image/png` e `image/webp`.
 
 O endpoint de upload emite URLs assinadas com validade de cinco minutos, limitadas a imagens JPG, PNG ou WebP de até 10 MB. As fotos são redimensionadas para no máximo 1600 px e convertidas para JPEG no navegador antes do envio. O bucket deve permitir leitura pública dos objetos; use uma URL S3 compatível com os domínios permitidos em `next.config.ts`.
 

@@ -93,8 +93,8 @@ DATABASE_URL="postgresql://usuario:senha@localhost:5432/alugafacil?schema=public
 
 # AWS S3 (Armazenamento de Imagens)
 AWS_REGION="sa-east-1"
-AWS_ACCESS_KEY_ID="seu_access_key_id"
-AWS_SECRET_ACCESS_KEY="seu_secret_access_key"
+APP_AWS_REGION="us-east-2"
+APP_AWS_S3_BUCKET_NAME="alugueis-costa-rica-243530875139-us-east-2-an"
 AWS_S3_BUCKET_NAME="alugafacil-imagens"
 
 # App
