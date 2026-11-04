@@ -3,6 +3,16 @@ import { z } from 'zod'
 export const propertyTypeEnum = z.enum(['HOUSE', 'APARTMENT', 'KITNET', 'COMMERCIAL'])
 export const propertyStatusEnum = z.enum(['AVAILABLE', 'RENTED', 'INACTIVE'])
 
+const propertyImageUrlSchema = z.string().refine((value) => {
+  try {
+    const url = new URL(value, 'https://alugueis-costa-rica.invalid')
+    const key = url.searchParams.get('key')
+    return url.pathname === '/api/images' && Boolean(key?.startsWith('properties/')) && !key?.includes('..')
+  } catch {
+    return false
+  }
+}, 'URL de imagem inválida.')
+
 export const createPropertySchema = z.object({
   title: z.string().trim().min(5, 'O título deve ter pelo menos 5 caracteres.').max(120),
   description: z.string().trim().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
@@ -17,7 +27,7 @@ export const createPropertySchema = z.object({
     .string()
     .trim()
     .regex(/^\+?[\d\s()-]{10,20}$/, 'Informe um número de WhatsApp válido.'),
-  images: z.array(z.string().url('URL de imagem inválida.')).min(1).max(10),
+  images: z.array(propertyImageUrlSchema).min(1).max(10),
 })
 
 export const updatePropertyStatusSchema = z.object({
