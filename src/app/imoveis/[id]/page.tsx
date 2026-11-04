@@ -47,7 +47,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
           <div className="grid gap-3 sm:grid-cols-2">
             {property.images.map((image, index) => (
               <div key={image.id} className={`relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 ${index === 0 ? 'sm:col-span-2 sm:aspect-[1.8]' : ''}`}>
-                <Image src={image.url} alt={`${property.title} — foto ${index + 1}`} fill priority={index === 0} sizes={index === 0 ? '(max-width: 640px) 100vw, 70vw' : '(max-width: 640px) 100vw, 35vw'} className="object-cover" />
+                <Image src={image.url} alt={`${property.title} — foto ${index + 1}`} fill unoptimized priority={index === 0} sizes={index === 0 ? '(max-width: 640px) 100vw, 70vw' : '(max-width: 640px) 100vw, 35vw'} className="object-cover" />
               </div>
             ))}
           </div>
